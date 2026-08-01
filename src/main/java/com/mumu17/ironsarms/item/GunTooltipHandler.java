@@ -10,13 +10,13 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.player.ItemTooltipEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = IronsArms.MODID)
+@EventBusSubscriber(modid = IronsArms.MODID)
 public class GunTooltipHandler {
 
     @SubscribeEvent
@@ -24,8 +24,8 @@ public class GunTooltipHandler {
         ItemStack stack = event.getItemStack();
         if (!(stack.getItem() instanceof IGun)) return;
 
-        CompoundTag tag = stack.getTag();
-        if (tag != null && tag.contains("InscribedSpell")) {
+        CompoundTag tag = GunTags.getCustomTagCopy(stack);
+        if (tag.contains("InscribedSpell")) {
             CompoundTag spellTag = tag.getCompound("InscribedSpell");
             String spellId = spellTag.getString("SpellID");
             int level = spellTag.getInt("Level");

@@ -2,7 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.mumu17.ironsarms.mixin",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_21",
   "refmap": "ironsarms.refmap.json",
   "mixins": [
     "ArcaneAnvilMenuMixin"

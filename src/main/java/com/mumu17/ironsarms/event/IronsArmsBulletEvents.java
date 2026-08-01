@@ -30,16 +30,16 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Mod.EventBusSubscriber(modid = IronsArms.MODID)
+@EventBusSubscriber(modid = IronsArms.MODID)
 public class IronsArmsBulletEvents {
     private static final Map<UUID, CompoundTag> pendingSpells = new ConcurrentHashMap<>();
     private static Boolean calamityRingExists = null;
@@ -54,12 +54,12 @@ public class IronsArmsBulletEvents {
         if (!(event.getShooter() instanceof Player player)) return;
 
         ItemStack gunStack = event.getGunItemStack();
-        CompoundTag rootTag = gunStack.getTag();
+        CompoundTag rootTag = GunTags.getCustomTagCopy(gunStack);
 
         AbstractSpell spell = null;
         int level = 1;
 
-        if (rootTag != null && rootTag.contains("InscribedSpell")) {
+        if (rootTag.contains("InscribedSpell")) {
             CompoundTag inscribedSpell = rootTag.getCompound("InscribedSpell");
             spell = SpellRegistry.getSpell(inscribedSpell.getString("SpellID"));
             level = inscribedSpell.getInt("Level");
@@ -75,7 +75,7 @@ public class IronsArmsBulletEvents {
         if (spell == null || spell == SpellRegistry.none()) return;
 
         ModifySpellLevelEvent levelEvent = new ModifySpellLevelEvent(spell, player, level, level);
-        MinecraftForge.EVENT_BUS.post(levelEvent);
+        NeoForge.EVENT_BUS.post(levelEvent);
         level = levelEvent.getLevel();
 
         MagicData magicData = MagicData.getPlayerMagicData(player);
@@ -113,20 +113,18 @@ public class IronsArmsBulletEvents {
     }
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            pendingSpells.clear();
-            playersWithCastingSpells.forEach((key, value) -> {
-                if (value > 0) {
-                    event.getServer().getAllLevels().forEach(level -> {
-                        if (level.getEntity(key) instanceof ServerPlayer player) {
-                            setManaFromGun(player, player.getMainHandItem());
-                        }
-                    });
-                    playersWithCastingSpells.put(key, value - 1);
-                }
-            });
-        }
+    public static void onServerTick(ServerTickEvent.Post event) {
+        pendingSpells.clear();
+        playersWithCastingSpells.forEach((key, value) -> {
+            if (value > 0) {
+                event.getServer().getAllLevels().forEach(level -> {
+                    if (level.getEntity(key) instanceof ServerPlayer player) {
+                        setManaFromGun(player, player.getMainHandItem());
+                    }
+                });
+                playersWithCastingSpells.put(key, value - 1);
+            }
+        });
     }
 
     @SubscribeEvent
@@ -295,7 +293,7 @@ public class IronsArmsBulletEvents {
 
     private static void setManaFromGun(Player player, ItemStack gunStack) {
         MagicData magicData = MagicData.getPlayerMagicData(player);
-        float maxMana = (float) player.getAttributeValue((Attribute)AttributeRegistry.MAX_MANA.get());
+        float maxMana = (float) player.getAttributeValue(AttributeRegistry.MAX_MANA);
         float addedMana = maxMana - magicData.getMana();
         magicData.addMana(addedMana);
         GunTags.addMana(gunStack, (int) -addedMana);

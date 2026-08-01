@@ -2,26 +2,24 @@ package com.mumu17.ironsarms.client;
 
 import com.mumu17.ironsarms.IronsArms;
 import com.mumu17.ironsarms.network.RequestSyncChargedManaMessage;
-import com.mumu17.ironsarms.register.ModNetworking;
 import com.mumu17.ironsarms.utils.GunTags;
 import io.redspace.ironsspellbooks.player.ClientMagicData;
 import net.minecraft.client.Minecraft;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 
-@Mod.EventBusSubscriber(modid = IronsArms.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@EventBusSubscriber(modid = IronsArms.MODID, value = Dist.CLIENT)
 public class ChargeManaToAmmoBoxTick {
 
     private static int tickCounter = 0;
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (!event.side.isClient() || event.phase != TickEvent.Phase.END) return;
+    public static void onClientTick(ClientTickEvent.Post event) {
         tickCounter++;
         if (tickCounter >= 20) {
             tickCounter = 0;
@@ -29,7 +27,7 @@ public class ChargeManaToAmmoBoxTick {
             Player player = mc.player;
             if (player != null) {
                 for (ItemStack stack : player.getInventory().items) {
-                    if (!GunTags.isTargetItem(stack) || stack.getTag() == null || !stack.getTag().contains("InscribedSpell")) continue;
+                    if (!GunTags.isTargetItem(stack) || !GunTags.containsCustomTag(stack, "InscribedSpell")) continue;
                     chargeManaOrCancel(stack);
                     return;
                 }
@@ -62,6 +60,6 @@ public class ChargeManaToAmmoBoxTick {
 
     public static void sendManaCountToServer(int manaCount) {
         ClientMagicData.setMana(manaCount);
-        ModNetworking.INSTANCE.sendToServer(new RequestSyncChargedManaMessage(manaCount));
+        PacketDistributor.sendToServer(new RequestSyncChargedManaMessage(manaCount));
     }
 }

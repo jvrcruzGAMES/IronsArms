@@ -36,13 +36,11 @@ public abstract class ArcaneAnvilMenuMixin extends ItemCombinerMenu {
                 SpellData spellData = spellContainer.getSpellAtIndex(0);
 
                 ItemStack result = baseStack.copy();
-                CompoundTag tag = result.getOrCreateTag();
-
                 CompoundTag spellTag = new CompoundTag();
                 spellTag.putString("SpellID", spellData.getSpell().getSpellId());
                 spellTag.putInt("Level", spellData.getLevel());
 
-                tag.put("InscribedSpell", spellTag);
+                com.mumu17.ironsarms.utils.GunTags.updateCustomTag(result, tag -> tag.put("InscribedSpell", spellTag));
 
                 // 結果スロット（index 2）にセット
                 this.resultSlots.setItem(0, result);
